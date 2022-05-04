@@ -3,6 +3,11 @@ const { ethers } = require("hardhat");
 const fs = require("fs");
 const { groth16 } = require("snarkjs");
 
+const F1Field = require("ffjavascript").F1Field;
+const Scalar = require("ffjavascript").Scalar;
+exports.p = Scalar.fromString("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+const Fr = new F1Field(exports.p);
+
 function unstringifyBigInts(o) {
     if ((typeof(o) == "string") && (/^[0-9]+$/.test(o) ))  {
         return BigInt(o);
@@ -37,11 +42,11 @@ describe("SystemOfEquations", function () {
         //[assignment] Add comments to explain what each line is doing
         const { proof, publicSignals } = await groth16.fullProve({
             "x": ["15","17","19"],
-            "A": [["1","1","1"],["1","2","3"],["2","-1","1"]],
+            "A": [["1","1","1"],["1","2","3"],["2",Fr.e(-1),"1"]],
             "b": ["51", "106", "32"]
         },
             "contracts/bonus/SystemOfEquations/SystemOfEquations_js/SystemOfEquations.wasm","contracts/bonus/SystemOfEquations/circuit_final.zkey");
-
+        
         const editedPublicSignals = unstringifyBigInts(publicSignals);
         const editedProof = unstringifyBigInts(proof);
         const calldata = await groth16.exportSolidityCallData(editedProof, editedPublicSignals);
